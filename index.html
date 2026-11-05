@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="CMD Dark">
+<title>CMD Dark</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<style>
+:root{
+  --bg:#0a0a0e;
+  --surface:#111118;
+  --bar:#13131a;
+  --border:#1e1e2e;
+  --border2:#2a2a3e;
+  --green:#00e050;
+  --green2:#00a038;
+  --cyan:#00d4ff;
+  --yellow:#ffe040;
+  --red:#ff4455;
+  --blue:#4488ff;
+  --purple:#aa66ff;
+  --white:#c8d0e8;
+  --muted:#404058;
+  --muted2:#606080;
+  --safe-t:env(safe-area-inset-top,0px);
+  --safe-b:env(safe-area-inset-bottom,0px);
+  --safe-l:env(safe-area-inset-left,0px);
+  --safe-r:env(safe-area-inset-right,0px);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{
+  height:100%;background:var(--bg);
+  font-family:'SF Mono','Menlo','Consolas','Courier New',monospace;
+  font-size:13px;color:var(--white);
+  overflow:hidden;overscroll-behavior:none;
+  -webkit-font-smoothing:antialiased;
+}
+#app{
+  display:flex;flex-direction:column;height:100%;
+  padding-top:var(--safe-t);
+  padding-bottom:var(--safe-b);
+  padding-left:var(--safe-l);
+  padding-right:var(--safe-r);
+}
+
+/* ── TITLE BAR ── */
+#tb{
+  background:var(--bar);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;
+  padding:10px 14px 9px;gap:10px;flex-shrink:0;
+  min-height:46px;
+}
+.dots{display:flex;gap:5px}
+.dot{width:11px;height:11px;border-radius:50%}
+.dot.r{background:#ff5f57}.dot.y{background:#febc2e}.dot.g{background:#28c840}
+#tb-title{flex:1;text-align:center;font-size:12px;color:var(--muted2);letter-spacing:.5px}
+#tabs{display:flex;gap:4px}
+.tab{
+  background:transparent;border:1px solid var(--border2);border-radius:5px;
+  color:var(--muted2);font-size:11px;font-family:inherit;
+  padding:3px 9px;cursor:pointer;transition:all .15s;
+}
+.tab.on{background:var(--green2);border-color:var(--green2);color:var(--green)}
+
+/* ── OUTPUT ── */
+#out-wrap{
+  flex:1;overflow-y:auto;overflow-x:hidden;
+  overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
+  padding:10px 12px 4px;
+}
+#out{display:flex;flex-direction:column;min-height:100%}
+.ln{line-height:1.7;word-break:break-all;white-space:pre-wrap;font-size:13px}
+.blank{height:7px}
+.cw{color:var(--white)}.cg{color:var(--green)}.cc{color:var(--cyan)}
+.cy{color:var(--yellow)}.cr{color:var(--red)}.cb{color:var(--blue)}
+.cp{color:var(--purple)}.cm{color:var(--muted2)}
+.pu{color:var(--green);font-weight:700}
+.pa{color:var(--cyan)}
+.pp{color:var(--yellow)}
+.pd{color:var(--green)}
+.pc{color:var(--white);padding-left:5px}
+
+/* ── INPUT BAR ── */
+#ibar{
+  background:var(--bar);border-top:1px solid var(--border);
+  padding:8px 10px;display:flex;flex-direction:column;gap:7px;flex-shrink:0;
+}
+#irow{
+  display:flex;align-items:center;gap:6px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:10px;padding:7px 10px;
+}
+#iprompt{color:var(--green);font-size:12px;white-space:nowrap;flex-shrink:0}
+#cin{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--white);font-family:inherit;font-size:13px;
+  caret-color:var(--green);min-width:0;
+  -webkit-user-select:text;user-select:text;
+}
+#cin::placeholder{color:var(--muted)}
+#ebtn{
+  background:var(--green2);border:none;border-radius:7px;
+  color:var(--green);font-size:17px;width:34px;height:30px;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  flex-shrink:0;font-weight:700;
+}
+#ebtn:active{opacity:.6;transform:scale(.94)}
+
+/* ── QUICK KEYS ── */
+#qwrap{overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+#qwrap::-webkit-scrollbar{display:none}
+#qrow{display:flex;gap:5px;padding-bottom:1px}
+.qk{
+  background:var(--surface);border:1px solid var(--border2);border-radius:7px;
+  color:var(--yellow);font-family:inherit;font-size:11px;
+  padding:5px 10px;white-space:nowrap;cursor:pointer;flex-shrink:0;
+}
+.qk:active{background:var(--border2)}
+.qk.a{color:var(--cyan)}
+.qk.n{color:var(--blue)}
+
+/* ── BOTTOM NAV ── */
+#nav{
+  background:var(--bar);border-top:1px solid var(--border);
+  display:flex;justify-content:space-around;
+  padding:7px 0 5px;flex-shrink:0;
+}
+.nb{
+  background:none;border:none;color:var(--muted2);
+  font-size:10.5px;font-family:inherit;
+  display:flex;flex-direction:column;align-items:center;gap:3px;
+  cursor:pointer;padding:0 8px;min-width:52px;
+}
+.nb .ic{font-size:19px}
+.nb.on{color:var(--cyan)}
+
+/* ── PANELS ── */
+.pane{display:none;flex-direction:column;flex:1;overflow-y:auto;padding:12px;overscroll-behavior:contain}
+.pane.vis{display:flex}
+.ph{font-size:10px;color:var(--muted2);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:10px}
+.sh{color:var(--cyan);font-size:11px;margin:14px 0 6px;border-bottom:1px solid var(--border);padding-bottom:4px;letter-spacing:.5px}
+
+/* history */
+.hi{
+  background:var(--surface);border:1px solid var(--border2);border-radius:9px;
+  padding:9px 12px;margin-bottom:5px;
+  display:flex;justify-content:space-between;align-items:center;cursor:pointer;
+}
+.hi:active{background:var(--border2)}
+.hc{color:var(--white);font-size:12.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht{color:var(--muted2);font-size:10.5px;flex-shrink:0;margin-left:8px}
+
+/* aliases */
+.ai{
+  background:var(--surface);border:1px solid var(--border2);border-radius:9px;
+  padding:9px 12px;margin-bottom:5px;
+  display:flex;align-items:center;gap:8px;
+}
+.an{color:var(--green);min-width:70px;font-size:12px}
+.av{color:var(--muted2);font-size:11.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ad{color:var(--red);font-size:17px;cursor:pointer;padding:0 3px;flex-shrink:0}
+.ainput{
+  background:var(--surface);border:1px solid var(--border2);border-radius:8px;
+  padding:7px 10px;color:var(--white);font-family:inherit;font-size:12px;outline:none;
+  flex:1;
+}
+.ainput:focus{border-color:var(--green2)}
+.aadd{
+  background:var(--green2);border:none;border-radius:8px;
+  color:var(--green);font-size:17px;width:36px;height:36px;
+  cursor:pointer;flex-shrink:0;font-weight:700;
+}
+
+/* system info */
+.ir{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px}
+.ik{color:var(--muted2)}.iv{color:var(--white)}
+
+/* scrollbar */
+::-webkit-scrollbar{width:2px;height:2px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* install banner */
+#install-banner{
+  display:none;background:var(--green2);
+  padding:9px 14px;text-align:center;
+  font-size:12px;color:var(--green);cursor:pointer;flex-shrink:0;
+  border-bottom:1px solid var(--border);
+}
+#install-banner:active{opacity:.8}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="install-banner" onclick="installPWA()">
+    📲 اضغط هنا لتثبيت CMD Dark على شاشتك الرئيسية
+  </div>
+
+  <div id="tb">
+    <div class="dots"><div class="dot r"></div><div class="dot y"></div><div class="dot g"></div></div>
+    <div id="tb-title">CMD Dark</div>
+    <div id="tabs">
+      <button class="tab on" onclick="switchTab(0)">1</button>
+      <button class="tab" onclick="switchTab(1)">2</button>
+      <button class="tab" onclick="switchTab(2)">3</button>
+    </div>
+  </div>
+
+  <!-- TERMINAL -->
+  <div id="pane-terminal" style="display:flex;flex-direction:column;flex:1;overflow:hidden;">
+    <div id="out-wrap"><div id="out"></div></div>
+    <div id="ibar">
+      <div id="irow">
+        <span id="iprompt">$</span>
+        <input id="cin" autocomplete="off" autocorrect="off" autocapitalize="off"
+               spellcheck="false" placeholder="اكتب أمرًا..." enterkeyhint="send"/>
+        <button id="ebtn" onclick="execCmd()">↵</button>
+      </div>
+      <div id="qwrap"><div id="qrow">
+        <button class="qk a" onclick="navH(-1)">▲</button>
+        <button class="qk a" onclick="navH(1)">▼</button>
+        <button class="qk n" onclick="appendI('  ')">TAB</button>
+        <button class="qk" onclick="si('ls')">ls</button>
+        <button class="qk" onclick="si('ls -la')">ls -la</button>
+        <button class="qk" onclick="si('cd ')">cd</button>
+        <button class="qk" onclick="si('cat ')">cat</button>
+        <button class="qk" onclick="si('pwd')">pwd</button>
+        <button class="qk" onclick="si('mkdir ')">mkdir</button>
+        <button class="qk" onclick="si('touch ')">touch</button>
+        <button class="qk" onclick="si('rm ')">rm</button>
+        <button class="qk" onclick="si('cp ')">cp</button>
+        <button class="qk" onclick="si('mv ')">mv</button>
+        <button class="qk" onclick="si('grep ')">grep</button>
+        <button class="qk" onclick="si('find . -name ')">find</button>
+        <button class="qk" onclick="si('write ')">write</button>
+        <button class="qk" onclick="si('tree')">tree</button>
+        <button class="qk" onclick="si('calc ')">calc</button>
+        <button class="qk" onclick="si('clear')">clear</button>
+        <button class="qk" onclick="si('help')">help</button>
+      </div></div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div id="pane-history" class="pane">
+    <div class="ph">سجل الأوامر</div>
+    <div id="hist-list"></div>
+  </div>
+
+  <!-- ALIASES -->
+  <div id="pane-aliases" class="pane">
+    <div class="ph">الاختصارات — Aliases</div>
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <input class="ainput" id="an-in" placeholder="الاسم (مثال: ll)" />
+      <input class="ainput" id="av-in" placeholder="الأمر (مثال: ls -la)" style="flex:1.5"/>
+      <button class="aadd" onclick="addAlias()">+</button>
+    </div>
+    <div id="alias-list"></div>
+  </div>
+
+  <!-- SYSTEM -->
+  <div id="pane-info" class="pane">
+    <div class="ph">معلومات النظام</div>
+    <div id="info-ct"></div>
+  </div>
+
+  <div id="nav">
+    <button class="nb on" id="nb-t" onclick="showPane('terminal')">
+      <span class="ic">⌨️</span>Terminal
+    </button>
+    <button class="nb" id="nb-h" onclick="showPane('history')">
+      <span class="ic">🕐</span>History
+    </button>
+    <button class="nb" id="nb-a" onclick="showPane('aliases')">
+      <span class="ic">⚡</span>Aliases
+    </button>
+    <button class="nb" id="nb-i" onclick="showPane('info')">
+      <span class="ic">ℹ️</span>System
+    </button>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+//  PWA INSTALL
+// ═══════════════════════════════
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferredPrompt = e;
+  document.getElementById('install-banner').style.display = 'block';
+});
+window.addEventListener('appinstalled', () => {
+  document.getElementById('install-banner').style.display = 'none';
+  deferredPrompt = null;
+});
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(() => {
+      deferredPrompt = null;
+      document.getElementById('install-banner').style.display = 'none';
+    });
+  } else {
+    // Manual instructions
+    alert('لتثبيت التطبيق:\n1. افتح قائمة Chrome (⋮)\n2. اختر "إضافة إلى الشاشة الرئيسية"\n3. اضغط إضافة ✓');
+  }
+}
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
+}
+
+// ═══════════════════════════════
+//  STATE
+// ═══════════════════════════════
+const SESS = [
+  {cwd:'/home/user',hist:[],hidx:-1},
+  {cwd:'/home/user',hist:[],hidx:-1},
+  {cwd:'/home/user',hist:[],hidx:-1},
+];
+let curS = 0;
+const gHist = [];
+let aliases = JSON.parse(localStorage.getItem('cmddark_aliases')||'{}');
+let vars = {USER:'user',HOME:'/home/user',SHELL:'/bin/sh',TERM:'xterm-256color',LANG:'ar_SA.UTF-8',PATH:'/usr/bin:/bin'};
+const startT = Date.now();
+
+// Load persisted FS or use defaults
+const DEFAULT_VFS = {
+  '/':{type:'dir',children:['home','etc','var','tmp','bin']},
+  '/home':{type:'dir',children:['user']},
+  '/home/user':{type:'dir',children:['documents','downloads','projects','notes.txt','.bashrc']},
+  '/home/user/documents':{type:'dir',children:['report.md','todo.txt']},
+  '/home/user/downloads':{type:'dir',children:[]},
+  '/home/user/projects':{type:'dir',children:['myapp']},
+  '/home/user/projects/myapp':{type:'dir',children:['index.js','readme.md']},
+  '/home/user/notes.txt':{type:'file',content:'📝 ملاحظاتي\n──────────\n- مهام اليوم\n- أفكار مهمة'},
+  '/home/user/.bashrc':{type:'file',content:'# .bashrc\nexport PATH="$HOME/.local/bin:$PATH"\nalias ll="ls -la"\nalias ..="cd .."'},
+  '/home/user/documents/report.md':{type:'file',content:'# تقرير\n\n## الملخص\nهذا تقرير تجريبي.\n\n## التفاصيل\n- بند 1\n- بند 2'},
+  '/home/user/documents/todo.txt':{type:'file',content:'[ ] مهمة 1\n[ ] مهمة 2\n[x] منجزة'},
+  '/home/user/projects/myapp/index.js':{type:'file',content:'// CMD Dark App\nconsole.log("Hello!");\n\nfunction main() {\n  return "CMD Dark";\n}'},
+  '/home/user/projects/myapp/readme.md':{type:'file',content:'# MyApp\nتطبيقي الشخصي\n\n## التثبيت\n```\nnpm install\n```'},
+  '/etc':{type:'dir',children:['hosts']},
+  '/etc/hosts':{type:'file',content:'127.0.0.1  localhost\n::1        localhost'},
+  '/tmp':{type:'dir',children:[]},
+  '/var':{type:'dir',children:['log']},
+  '/var/log':{type:'dir',children:['system.log']},
+  '/var/log/system.log':{type:'file',content:'[INFO] CMD Dark started\n[INFO] PWA ready\n[INFO] Session opened'},
+  '/bin':{type:'dir',children:['sh']},
+  '/bin/sh':{type:'file',content:'binary',perms:'rwxr-xr-x'},
+};
+
+let VFS = JSON.parse(localStorage.getItem('cmddark_vfs')||'null') || JSON.parse(JSON.stringify(DEFAULT_VFS));
+
+function saveVFS() {
+  try { localStorage.setItem('cmddark_vfs', JSON.stringify(VFS)); } catch(e){}
+}
+function saveAliases() {
+  try { localStorage.setItem('cmddark_aliases', JSON.stringify(aliases)); } catch(e){}
+}
+
+// ═══════════════════════════════
+//  PATH HELPERS
+// ═══════════════════════════════
+function sess(){ return SESS[curS]; }
+function rp(p){
+  if(!p) return sess().cwd;
+  if(p==='~'||p==='') return '/home/user';
+  if(p.startsWith('~/')) return '/home/user'+p.slice(1);
+  if(p.startsWith('/')) return np(p);
+  const parts=sess().cwd.split('/').filter(Boolean);
+  for(const seg of p.split('/')){
+    if(seg==='..') parts.pop();
+    else if(seg!=='.') parts.push(seg);
+  }
+  return np('/'+parts.join('/'));
+}
+function np(p){ return p.replace(/\/+/g,'/').replace(/\/$/,'')||'/'; }
+function par(p){ return np(p.split('/').slice(0,-1).join('/'))||'/'; }
+function bn(p){ return p.split('/').pop()||'/'; }
+function dp(p){ return p.startsWith('/home/user')?p.replace('/home/user','~'):p; }
+
+// ═══════════════════════════════
+//  OUTPUT
+// ═══════════════════════════════
+const outEl = ()=>document.getElementById('out');
+function out(text, cls='cw'){
+  const el = outEl();
+  if(text===''){const d=document.createElement('div');d.className='ln blank';el.appendChild(d);}
+  else text.split('\n').forEach(ln=>{
+    const d=document.createElement('div');d.className='ln '+cls;d.textContent=ln;el.appendChild(d);
+  });
+  scrollB();
+}
+function outH(html){
+  const el=outEl();const d=document.createElement('div');
+  d.className='ln';d.innerHTML=html;el.appendChild(d);scrollB();
+}
+function outPr(cmd){
+  const p=dp(sess().cwd);
+  outH(`<span class="pu">user</span><span class="pa">@cmddark</span><span class="cm">:</span><span class="pp">${p}</span><span class="pd"> $</span><span class="pc">${esc(cmd)}</span>`);
+}
+function esc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function scrollB(){ setTimeout(()=>{ const w=document.getElementById('out-wrap'); w.scrollTop=w.scrollHeight; },20); }
+function clr(){ outEl().innerHTML=''; }
+function updPrompt(){
+  document.getElementById('iprompt').textContent='user@cmddark:'+dp(sess().cwd)+'$ ';
+  document.getElementById('tb-title').textContent='CMD Dark — '+dp(sess().cwd);
+}
+
+// ═══════════════════════════════
+//  PARSER
+// ═══════════════════════════════
+function parseLine(line){
+  line=line.replace(/\$([A-Z_a-z]+)/g,(_,k)=>vars[k]||'');
+  const parts=line.trim().split(/\s+/);
+  if(aliases[parts[0]]){ line=aliases[parts[0]]+' '+parts.slice(1).join(' '); }
+  return line.trim();
+}
+function tok(line){
+  const tokens=[];let cur='',inQ=false,qc='';
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(inQ){if(c===qc)inQ=false;else cur+=c;}
+    else if(c==='"'||c==="'"){inQ=true;qc=c;}
+    else if(c===' '){if(cur){tokens.push(cur);cur='';}}
+    else cur+=c;
+  }
+  if(cur)tokens.push(cur);
+  return tokens;
+}
+
+// ═══════════════════════════════
+//  COMMANDS
+// ═══════════════════════════════
+const CMD={
+  help(a){
+    const helps={
+      ls:'ls [-a] [-l] [dir]\nعرض محتويات مجلد. -a مخفية. -l تفاصيل.',
+      cd:'cd [dir]\nالانتقال. cd ~ للمنزل.',
+      cat:'cat <ملف>\nعرض محتوى ملف.',
+      mkdir:'mkdir <اسم>\nإنشاء مجلد.',
+      touch:'touch <اسم>\nإنشاء ملف فارغ.',
+      rm:'rm [-r] <اسم>\nحذف. -r للمجلد.',
+      cp:'cp <مصدر> <وجهة>\nنسخ.',
+      mv:'mv <مصدر> <وجهة>\nنقل أو إعادة تسمية.',
+      write:'write <ملف> <نص>\nكتابة نص لملف.',
+      append:'append <ملف> <نص>\nإضافة نص لملف.',
+      grep:'grep <نص> <ملف>\nبحث داخل ملف.',
+      find:'find [dir] -name <نمط>\nبحث عن ملفات.',
+      calc:'calc <تعبير>\nحاسبة. مثال: calc 5*8',
+      base64:'base64 [-d] <نص>\nتشفير/فك تشفير.',
+      alias:'alias [اسم=أمر]\nإنشاء اختصار.',
+      export:'export VAR=قيمة\nتعيين متغير.',
+      tree:'tree [dir]\nعرض هيكل المجلدات.',
+    };
+    if(a[0]&&helps[a[0]]){out(helps[a[0]],'cw');return;}
+    if(a[0]){out('لا توجد مساعدة لـ: '+a[0],'cy');return;}
+    out('CMD Dark — الأوامر','cc');out('');
+    [
+      ['التنقل',[['ls','عرض المجلد'],['cd','تغيير المجلد'],['pwd','المسار الحالي'],['tree','هيكل المجلدات']]],
+      ['الملفات',[['cat','عرض ملف'],['mkdir','إنشاء مجلد'],['touch','إنشاء ملف'],['rm','حذف'],['cp','نسخ'],['mv','نقل/تسمية'],['write','كتابة لملف'],['append','إضافة لملف'],['head','أول الملف'],['tail','آخر الملف']]],
+      ['البحث',[['grep','بحث في ملف'],['find','بحث عن ملف'],['wc','عد الكلمات'],['sort','ترتيب'],['uniq','إزالة المكرر']]],
+      ['النظام',[['date','التاريخ'],['whoami','المستخدم'],['uname','النظام'],['uptime','وقت التشغيل'],['ps','العمليات'],['df','القرص'],['free','الذاكرة'],['env','المتغيرات']]],
+      ['أدوات',[['echo','طباعة نص'],['calc','حاسبة'],['base64','تشفير'],['rev','عكس'],['tr','استبدال'],['wc','إحصاء']]],
+      ['الجلسة',[['history','السجل'],['clear','مسح'],['alias','اختصارات'],['export','متغير'],['!!','تكرار آخر أمر'],['reset','إعادة ضبط FS']]],
+    ].forEach(([g,cs])=>{
+      out('  '+g+':','cy');
+      cs.forEach(([c,d])=>out('    '+c.padEnd(14)+d,'cm'));
+    });
+    out('');out("اكتب help <أمر> لمزيد",'cg');
+  },
+
+  ls(a){
+    let hidden=false,lng=false,target=null;
+    a.forEach(x=>{
+      if(x==='-a'||x==='-la'||x==='-al')hidden=true;
+      if(x==='-l'||x==='-la'||x==='-al')lng=true;
+      if(!x.startsWith('-'))target=x;
+    });
+    const p=rp(target);
+    if(!VFS[p]){out('ls: لا يوجد: '+(target||sess().cwd),'cr');return;}
+    if(VFS[p].type==='file'){out(bn(p),'cw');return;}
+    let items=[...(VFS[p].children||[])];
+    if(hidden){
+      const hid=Object.keys(VFS).filter(k=>k.startsWith(p+'/')&&k!==p).map(k=>bn(k)).filter(n=>n.startsWith('.')&&!items.includes(n));
+      items=['.','..', ...hid,...items];
+    }
+    if(!items.length){out('(فارغ)','cm');return;}
+    if(lng){
+      out('total '+items.length,'cm');
+      items.forEach(nm=>{
+        const fp=p==='/'?'/'+nm:p+'/'+nm;const nd=VFS[fp];
+        const isD=nd&&nd.type==='dir';
+        const perms=nd?.perms||(isD?'drwxr-xr-x':'-rw-r--r--');
+        const sz=isD?'   -':(nd?.content?.length||0).toString().padStart(4);
+        out(`${perms}  user  ${sz}  ${nm}${isD?'/':''}`,isD?'cb':'cw');
+      });
+    } else {
+      items.forEach(nm=>{
+        const fp=p==='/'?'/'+nm:p+'/'+nm;const nd=VFS[fp];
+        const isD=nd&&nd.type==='dir';
+        out((isD?'📁 ':'📄 ')+nm+(isD?'/':''),isD?'cb':'cw');
+      });
+    }
+  },
+
+  pwd(){out(sess().cwd);},
+
+  cd(a){
+    const t=a[0]||'/home/user';const p=rp(t);
+    if(!VFS[p]){out('cd: لا يوجد: '+t,'cr');return;}
+    if(VFS[p].type!=='dir'){out('cd: ليس مجلدًا: '+t,'cr');return;}
+    sess().cwd=p;updPrompt();
+  },
+
+  cat(a){
+    if(!a.length){out('cat: حدد اسم ملف','cr');return;}
+    a.forEach(x=>{
+      const p=rp(x);
+      if(!VFS[p]){out('cat: لا يوجد: '+x,'cr');return;}
+      if(VFS[p].type==='dir'){out('cat: هذا مجلد','cr');return;}
+      out(VFS[p].content||'(ملف فارغ)','cw');
+    });
+  },
+
+  echo(a){out(a.join(' '),'cw');},
+
+  mkdir(a){
+    if(!a.length){out('mkdir: حدد اسمًا','cr');return;}
+    a.forEach(x=>{
+      const p=rp(x);
+      if(VFS[p]){out('mkdir: موجود: '+x,'cy');return;}
+      VFS[p]={type:'dir',children:[]};
+      const pa=par(p);if(VFS[pa]?.type==='dir'){const n=bn(p);if(!VFS[pa].children.includes(n))VFS[pa].children.push(n);}
+      out('تم: '+x,'cg');saveVFS();
+    });
+  },
+
+  touch(a){
+    if(!a.length){out('touch: حدد اسمًا','cr');return;}
+    a.forEach(x=>{
+      const p=rp(x);
+      if(!VFS[p]){
+        VFS[p]={type:'file',content:''};
+        const pa=par(p);if(VFS[pa]?.type==='dir'){const n=bn(p);if(!VFS[pa].children.includes(n))VFS[pa].children.push(n);}
+        out('تم: '+x,'cg');saveVFS();
+      } else out('(موجود): '+x,'cm');
+    });
+  },
+
+  rm(a){
+    let rec=false;const files=[];
+    a.forEach(x=>{if(x==='-r'||x==='-rf'||x==='-fr')rec=true;else files.push(x);});
+    if(!files.length){out('rm: حدد اسمًا','cr');return;}
+    files.forEach(x=>{
+      const p=rp(x);
+      if(!VFS[p]){out('rm: لا يوجد: '+x,'cr');return;}
+      if(VFS[p].type==='dir'&&!rec){out('rm: '+x+' مجلد، استخدم -r','cr');return;}
+      Object.keys(VFS).filter(k=>k===p||k.startsWith(p+'/')).forEach(k=>delete VFS[k]);
+      const pa=par(p),nm=bn(p);
+      if(VFS[pa]?.type==='dir')VFS[pa].children=VFS[pa].children.filter(c=>c!==nm);
+      out('تم الحذف: '+x,'cg');saveVFS();
+    });
+  },
+
+  cp(a){
+    if(a.length<2){out('cp: cp <مصدر> <وجهة>','cr');return;}
+    const src=rp(a[0]),dst=rp(a[1]);
+    if(!VFS[src]){out('cp: لا يوجد: '+a[0],'cr');return;}
+    const nd={...VFS[src],content:VFS[src].content};
+    if(VFS[dst]?.type==='dir'){
+      const np2=dst+'/'+bn(src);VFS[np2]=nd;
+      if(!VFS[dst].children.includes(bn(src)))VFS[dst].children.push(bn(src));
+    } else {
+      VFS[dst]=nd;const pa=par(dst);
+      if(VFS[pa]?.type==='dir'){const n=bn(dst);if(!VFS[pa].children.includes(n))VFS[pa].children.push(n);}
+    }
+    out('تم النسخ: '+a[0]+' → '+a[1],'cg');saveVFS();
+  },
+
+  mv(a){
+    if(a.length<2){out('mv: mv <مصدر> <وجهة>','cr');return;}
+    const src=rp(a[0]),dst=rp(a[1]);
+    if(!VFS[src]){out('mv: لا يوجد: '+a[0],'cr');return;}
+    VFS[dst]=VFS[src];delete VFS[src];
+    const sp=par(src),sn=bn(src);
+    if(VFS[sp]?.type==='dir')VFS[sp].children=VFS[sp].children.filter(c=>c!==sn);
+    const dp2=par(dst),dn=bn(dst);
+    if(VFS[dp2]?.type==='dir'&&!VFS[dp2].children.includes(dn))VFS[dp2].children.push(dn);
+    out('تم: '+a[0]+' → '+a[1],'cg');saveVFS();
+  },
+
+  write(a){
+    if(a.length<2){out('write: write <ملف> <نص>','cr');return;}
+    const p=rp(a[0]);const content=a.slice(1).join(' ');
+    VFS[p]={type:'file',content};
+    const pa=par(p);if(VFS[pa]?.type==='dir'){const n=bn(p);if(!VFS[pa].children.includes(n))VFS[pa].children.push(n);}
+    out('تم الكتابة: '+a[0],'cg');saveVFS();
+  },
+
+  append(a){
+    if(a.length<2){out('append: append <ملف> <نص>','cr');return;}
+    const p=rp(a[0]);const text='\n'+a.slice(1).join(' ');
+    if(!VFS[p])VFS[p]={type:'file',content:text.trim()};
+    else VFS[p].content+=text;
+    out('تم الإضافة: '+a[0],'cg');saveVFS();
+  },
+
+  grep(a){
+    if(a.length<2){out('grep: grep <نص> <ملف>','cr');return;}
+    const pat=a[0],fp=rp(a[1]);
+    if(!VFS[fp]||VFS[fp].type==='dir'){out('grep: لا يوجد: '+a[1],'cr');return;}
+    let found=0;
+    VFS[fp].content.split('\n').forEach((l,i)=>{
+      if(l.toLowerCase().includes(pat.toLowerCase())){out((i+1)+': '+l,'cg');found++;}
+    });
+    if(!found)out('لا نتائج لـ: '+pat,'cm');
+    else out(found+' نتيجة','cc');
+  },
+
+  find(a){
+    let start=sess().cwd,name=null;
+    for(let i=0;i<a.length;i++){
+      if(a[i]==='-name')name=a[i+1];
+      else if(!a[i].startsWith('-')&&a[i]!==name)start=rp(a[i]);
+    }
+    const res=Object.keys(VFS).filter(k=>{
+      if(!k.startsWith(start))return false;
+      if(name){const pat=new RegExp('^'+name.replace(/\*/g,'.*').replace(/\?/g,'.')+'$','i');return pat.test(bn(k));}
+      return true;
+    });
+    if(!res.length)out('لا نتائج','cm');
+    else res.forEach(r=>out(r,'cw'));
+  },
+
+  wc(a){
+    if(!a.length){out('wc: wc <ملف>','cr');return;}
+    a.forEach(x=>{
+      const p=rp(x);if(!VFS[p]||VFS[p].type==='dir'){out('wc: لا يوجد: '+x,'cr');return;}
+      const c=VFS[p].content;
+      out(`أسطر:${c.split('\n').length}  كلمات:${c.split(/\s+/).filter(Boolean).length}  حروف:${c.length}  ${x}`,'cw');
+    });
+  },
+
+  sort(a){
+    const rev=a.includes('-r');const f=a.find(x=>!x.startsWith('-'));
+    if(!f){out('sort: sort <ملف>','cr');return;}
+    const p=rp(f);if(!VFS[p]||VFS[p].type==='dir'){out('sort: لا يوجد: '+f,'cr');return;}
+    let lines=VFS[p].content.split('\n').filter(Boolean).sort();
+    if(rev)lines.reverse();
+    lines.forEach(l=>out(l,'cw'));
+  },
+
+  uniq(a){
+    if(!a.length){out('uniq: uniq <ملف>','cr');return;}
+    const p=rp(a[0]);if(!VFS[p]||VFS[p].type==='dir'){out('uniq: لا يوجد: '+a[0],'cr');return;}
+    const ls=VFS[p].content.split('\n');
+    ls.filter((l,i)=>i===0||l!==ls[i-1]).forEach(l=>out(l,'cw'));
+  },
+
+  rev(a){
+    if(!a.length){out('rev: rev <ملف>','cr');return;}
+    const p=rp(a[0]);if(!VFS[p]||VFS[p].type==='dir'){out('rev: لا يوجد: '+a[0],'cr');return;}
+    VFS[p].content.split('\n').forEach(l=>out([...l].reverse().join(''),'cw'));
+  },
+
+  tr(a){
+    if(a.length<3){out('tr: tr <من> <إلى> <ملف>','cr');return;}
+    const p=rp(a[2]);if(!VFS[p]||VFS[p].type==='dir'){out('tr: لا يوجد: '+a[2],'cr');return;}
+    out(VFS[p].content.split(a[0]).join(a[1]),'cw');
+  },
+
+  head(a){
+    const n=a.includes('-n')?parseInt(a[a.indexOf('-n')+1]):10;
+    const f=a.find(x=>!x.startsWith('-')&&x!==String(n));
+    if(!f){out('head: head <ملف>','cr');return;}
+    const p=rp(f);if(!VFS[p]||VFS[p].type==='dir'){out('head: لا يوجد: '+f,'cr');return;}
+    VFS[p].content.split('\n').slice(0,n).forEach(l=>out(l,'cw'));
+  },
+
+  tail(a){
+    const n=a.includes('-n')?parseInt(a[a.indexOf('-n')+1]):10;
+    const f=a.find(x=>!x.startsWith('-')&&x!==String(n));
+    if(!f){out('tail: tail <ملف>','cr');return;}
+    const p=rp(f);if(!VFS[p]||VFS[p].type==='dir'){out('tail: لا يوجد: '+f,'cr');return;}
+    VFS[p].content.split('\n').slice(-n).forEach(l=>out(l,'cw'));
+  },
+
+  tree(a){
+    const root=rp(a[0]);
+    if(!VFS[root]||VFS[root].type!=='dir'){out('tree: لا يوجد المجلد','cr');return;}
+    function walk(p,pfx){
+      const nd=VFS[p];if(!nd?.children)return;
+      nd.children.forEach((c,i)=>{
+        const isL=i===nd.children.length-1;
+        const fp=p==='/'?'/'+c:p+'/'+c;
+        const isD=VFS[fp]?.type==='dir';
+        out(pfx+(isL?'└── ':'├── ')+c+(isD?'/':''),isD?'cb':'cw');
+        if(isD)walk(fp,pfx+(isL?'    ':'│   '));
+      });
+    }
+    out(dp(root)+'/','cy');walk(root,'');
+  },
+
+  calc(a){
+    if(!a.length){out('calc: calc <تعبير>','cr');return;}
+    try{
+      const expr=a.join('').replace(/[^0-9+\-*/(). %]/g,'');
+      const r=new Function('return ('+expr+')')();
+      out(a.join('')+' = '+(Number.isInteger(r)?r:parseFloat(r.toFixed(8))),'cc');
+    }catch{out('calc: تعبير غير صالح','cr');}
+  },
+
+  base64(a){
+    if(!a.length){out('base64: base64 [-d] <نص>','cr');return;}
+    if(a[0]==='-d'){
+      try{out(atob(a[1]||''),'cw');}catch{out('base64: غير صالح','cr');}
+    } else {
+      try{out(btoa(unescape(encodeURIComponent(a.join(' ')))),'cw');}catch{out('base64: خطأ','cr');}
+    }
+  },
+
+  date(){
+    const n=new Date();
+    out(n.toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'  '+n.toLocaleTimeString('ar-SA'));
+  },
+
+  whoami(){out(vars.USER,'cg');},
+
+  uname(a){
+    if(a.includes('-a'))out('CMD Dark OS 2.0 mobile #1 SMP POSIX aarch64 GNU/Linux');
+    else if(a.includes('-r'))out('5.15.0-cmddark');
+    else if(a.includes('-m'))out('aarch64');
+    else out('CMD Dark OS');
+  },
+
+  uptime(){
+    const s=Math.floor((Date.now()-startT)/1000);
+    out(`up ${Math.floor(s/3600)}:${String(Math.floor((s%3600)/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')},  load: 0.00 0.00 0.00`,'cw');
+  },
+
+  ps(){
+    out('  PID TTY      TIME CMD','cm');
+    out('    1 pts/0    0:00 sh','cw');
+    out('   99 pts/0    0:00 cmddark','cw');
+  },
+
+  df(){
+    out('Filesystem   Size  Used Avail Use% Mounted on','cm');
+    out('/dev/vda1    8.0G  2.0G  6.0G  26% /','cw');
+    out('tmpfs        512M     0  512M   0% /tmp','cw');
+  },
+
+  free(){
+    out('               total    used    free  shared','cm');
+    out('Mem:           2048M   512M   1536M    32M','cw');
+    out('Swap:          1024M     0M   1024M','cw');
+  },
+
+  env(a){
+    if(a[0]){out(a[0]+'='+(vars[a[0]]||'(غير معرف)'),'cm');return;}
+    Object.entries(vars).forEach(([k,v])=>out(k+'='+v,'cm'));
+  },
+
+  export(a){
+    if(!a.length){CMD.env([]);return;}
+    const eq=a[0].indexOf('=');if(eq<0){out('export: export VAR=قيمة','cr');return;}
+    const k=a[0].slice(0,eq),v=a[0].slice(eq+1);vars[k]=v;
+    out('تم: '+k+'='+v,'cg');
+  },
+
+  set(a){CMD.export(a);},
+
+  history(){
+    if(!gHist.length){out('السجل فارغ','cm');return;}
+    gHist.forEach((h,i)=>out(`  ${String(i+1).padStart(3)}  ${h.cmd}  (${h.time})`,'cm'));
+  },
+
+  alias(a){
+    if(!a.length){
+      if(!Object.keys(aliases).length){out('لا توجد اختصارات','cm');return;}
+      Object.entries(aliases).forEach(([k,v])=>out(`alias ${k}='${v}'`,'cm'));
+      return;
+    }
+    const eq=a[0].indexOf('=');
+    if(eq<0){if(aliases[a[0]])out(`alias ${a[0]}='${aliases[a[0]]}'`,'cm');else out('alias: غير موجود: '+a[0],'cr');return;}
+    const k=a[0].slice(0,eq),v=a[0].slice(eq+1).replace(/^['"]|['"]$/g,'');
+    aliases[k]=v;out(`تم: ${k} = '${v}'`,'cg');saveAliases();renderAliases();
+  },
+
+  unalias(a){
+    if(!a.length){out('unalias: unalias <اسم>','cr');return;}
+    if(aliases[a[0]]){delete aliases[a[0]];out('تم الحذف: '+a[0],'cg');saveAliases();renderAliases();}
+    else out('unalias: غير موجود: '+a[0],'cr');
+  },
+
+  clear(){clr();},
+
+  reset(){
+    if(confirm('إعادة ضبط نظام الملفات؟ سيتم حذف كل شيء.')){
+      VFS=JSON.parse(JSON.stringify(DEFAULT_VFS));
+      SESS.forEach(s=>{s.cwd='/home/user';s.hist=[];s.hidx=-1;});
+      saveVFS();clr();updPrompt();boot();
+    }
+  },
+
+  which(a){
+    if(!a.length){out('which: which <أمر>','cr');return;}
+    if(CMD[a[0]])out('/bin/'+a[0],'cw');else out(a[0]+': not found','cr');
+  },
+
+  man(a){CMD.help(a);},
+  type(a){CMD.which(a);},
+
+  chmod(a){
+    if(a.length<2){out('chmod: chmod <صلاحيات> <ملف>','cr');return;}
+    const p=rp(a[1]);if(!VFS[p]){out('chmod: لا يوجد: '+a[1],'cr');return;}
+    VFS[p].perms=a[0];out('تم: '+a[1],'cg');saveVFS();
+  },
+
+  exit(){
+    out('انتهت الجلسة. شكرًا لاستخدام CMD Dark!','cc');
+    setTimeout(()=>{clr();boot();},1200);
+  },
+};
+
+// ═══════════════════════════════
+//  EXECUTE
+// ═══════════════════════════════
+function execLine(raw){
+  if(!raw.trim()){out('');return;}
+  if(raw.trim()==='!!'){
+    if(!gHist.length){out('لا توجد أوامر سابقة','cr');return;}
+    raw=gHist[gHist.length-1].cmd;out('↑ '+raw,'cm');
+  }
+  const line=parseLine(raw);
+  const tokens=tok(line);if(!tokens.length)return;
+  const [cmd,...args]=tokens;
+  const now=new Date().toLocaleTimeString('ar-SA',{hour:'2-digit',minute:'2-digit'});
+  gHist.push({cmd:raw,time:now});
+  sess().hist.push(raw);sess().hidx=sess().hist.length;
+  if(CMD[cmd]){try{CMD[cmd](args);}catch(e){out(cmd+': خطأ: '+e.message,'cr');}}
+  else out(`${cmd}: command not found — جرب 'help'`,'cr');
+}
+
+function execCmd(){
+  const inp=document.getElementById('cin');
+  const val=inp.value;
+  outPr(val);execLine(val.trim());
+  inp.value='';inp.focus();
+}
+
+// ═══════════════════════════════
+//  UI
+// ═══════════════════════════════
+function navH(d){
+  const s=sess();
+  s.hidx=Math.max(-1,Math.min(s.hist.length-1,s.hidx+d));
+  document.getElementById('cin').value=s.hidx>=0?s.hist[s.hist.length-1-s.hidx]:'';
+}
+function si(v){
+  const inp=document.getElementById('cin');inp.value=v;
+  showPane('terminal');inp.focus();
+  setTimeout(()=>{inp.selectionStart=inp.selectionEnd=inp.value.length;},10);
+}
+function appendI(v){document.getElementById('cin').value+=v;document.getElementById('cin').focus();}
+
+function switchTab(i){
+  curS=i;
+  document.querySelectorAll('.tab').forEach((b,j)=>b.classList.toggle('on',i===j));
+  clr();updPrompt();out('الجلسة '+(i+1),'cc');
+}
+
+function showPane(name){
+  const names=['terminal','history','aliases','info'];
+  names.forEach(p=>{
+    const isT=p==='terminal';
+    const el=document.getElementById('pane-'+p);
+    if(isT)el.style.display=p===name?'flex':'none';
+    else el.classList.toggle('vis',p===name);
+    document.getElementById('nb-'+p[0]).classList.toggle('on',p===name);
+  });
+  if(name==='history')renderHistory();
+  if(name==='aliases')renderAliases();
+  if(name==='info')renderInfo();
+}
+
+function renderHistory(){
+  const el=document.getElementById('hist-list');el.innerHTML='';
+  if(!gHist.length){el.innerHTML='<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px 0;">السجل فارغ</div>';return;}
+  [...gHist].reverse().forEach(h=>{
+    const d=document.createElement('div');d.className='hi';
+    d.innerHTML=`<span class="hc">${esc(h.cmd)}</span><span class="ht">${h.time}</span>`;
+    d.onclick=()=>si(h.cmd);el.appendChild(d);
+  });
+}
+
+function renderAliases(){
+  const el=document.getElementById('alias-list');el.innerHTML='';
+  if(!Object.keys(aliases).length){el.innerHTML='<div style="color:var(--muted2);font-size:12px;text-align:center;padding:20px 0;">لا توجد اختصارات</div>';return;}
+  Object.entries(aliases).forEach(([k,v])=>{
+    const d=document.createElement('div');d.className='ai';
+    d.innerHTML=`<span class="an">${esc(k)}</span><span class="av">${esc(v)}</span><span class="ad" onclick="delAlias('${esc(k)}')">✕</span>`;
+    el.appendChild(d);
+  });
+}
+
+function addAlias(){
+  const n=document.getElementById('an-in').value.trim();
+  const v=document.getElementById('av-in').value.trim();
+  if(!n||!v)return;
+  aliases[n]=v;
+  document.getElementById('an-in').value='';
+  document.getElementById('av-in').value='';
+  saveAliases();renderAliases();
+}
+
+function delAlias(k){delete aliases[k];saveAliases();renderAliases();}
+
+function renderInfo(){
+  const s=Math.floor((Date.now()-startT)/1000);
+  const h=Math.floor(s/3600),m=Math.floor((s%3600)/60),sec=s%60;
+  const fc=Object.values(VFS).filter(v=>v.type==='file').length;
+  const dc=Object.values(VFS).filter(v=>v.type==='dir').length;
+  const lsSize=JSON.stringify(VFS).length;
+  document.getElementById('info-ct').innerHTML=`
+    <div class="sh">النظام</div>
+    <div class="ir"><span class="ik">التطبيق</span><span class="iv">CMD Dark v2.0</span></div>
+    <div class="ir"><span class="ik">النظام</span><span class="iv">CMD Dark OS</span></div>
+    <div class="ir"><span class="ik">المعمارية</span><span class="iv">aarch64</span></div>
+    <div class="ir"><span class="ik">التشغيل</span><span class="iv">${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}</span></div>
+    <div class="sh">المستخدم</div>
+    <div class="ir"><span class="ik">المستخدم</span><span class="iv">user</span></div>
+    <div class="ir"><span class="ik">المجلد</span><span class="iv">${dp(sess().cwd)}</span></div>
+    <div class="ir"><span class="ik">الجلسة</span><span class="iv">${curS+1}</span></div>
+    <div class="sh">الملفات</div>
+    <div class="ir"><span class="ik">مجلدات</span><span class="iv">${dc}</span></div>
+    <div class="ir"><span class="ik">ملفات</span><span class="iv">${fc}</span></div>
+    <div class="ir"><span class="ik">حجم FS</span><span class="iv">${(lsSize/1024).toFixed(1)} KB</span></div>
+    <div class="sh">الجلسة</div>
+    <div class="ir"><span class="ik">أوامر منفذة</span><span class="iv">${gHist.length}</span></div>
+    <div class="ir"><span class="ik">اختصارات</span><span class="iv">${Object.keys(aliases).length}</span></div>
+    <div class="ir"><span class="ik">أوامر متاحة</span><span class="iv">${Object.keys(CMD).length}</span></div>
+    <div class="sh">PWA</div>
+    <div class="ir"><span class="ik">Service Worker</span><span class="iv">${'serviceWorker' in navigator?'✅ نشط':'❌'}</span></div>
+    <div class="ir"><span class="ik">وضع العرض</span><span class="iv">${window.matchMedia('(display-mode: standalone)').matches?'📱 تطبيق':'🌐 متصفح'}</span></div>
+  `;
+}
+
+// keyboard
+document.getElementById('cin').addEventListener('keydown',e=>{
+  if(e.key==='Enter')execCmd();
+  if(e.key==='ArrowUp'){e.preventDefault();navH(-1);}
+  if(e.key==='ArrowDown'){e.preventDefault();navH(1);}
+  if(e.key==='Tab'){e.preventDefault();appendI('  ');}
+  if(e.key==='l'&&e.ctrlKey){e.preventDefault();clr();}
+  if(e.key==='c'&&e.ctrlKey){out('^C','cr');document.getElementById('cin').value='';}
+});
+
+// prevent double-tap zoom
+document.addEventListener('dblclick',e=>e.preventDefault());
+
+// ═══════════════════════════════
+//  BOOT
+// ═══════════════════════════════
+function boot(){
+  out(' ██████╗███╗   ███╗██████╗     ██████╗  █████╗ ██████╗ ██╗  ██╗','cg');
+  out('██╔════╝████╗ ████║██╔══██╗    ██╔══██╗██╔══██╗██╔══██╗██║ ██╔╝','cg');
+  out('██║     ██╔████╔██║██║  ██║    ██║  ██║███████║██████╔╝█████╔╝ ','cg');
+  out('██║     ██║╚██╔╝██║██║  ██║    ██║  ██║██╔══██║██╔══██╗██╔═██╗ ','cg');
+  out('╚██████╗██║ ╚═╝ ██║██████╔╝    ██████╔╝██║  ██║██║  ██║██║  ██╗','cg');
+  out(' ╚═════╝╚═╝     ╚═╝╚═════╝     ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝','cg');
+  out('');
+  out('CMD Dark v2.0 — طرفيتك الشخصية 🔲','cc');
+  out('اكتب help لعرض الأوامر | الملفات محفوظة تلقائيًا','cm');
+  if(window.matchMedia('(display-mode: standalone)').matches)
+    out('📱 يعمل كتطبيق مثبَّت','cg');
+  out('');
+  updPrompt();
+}
+
+boot();
+</script>
+</body>
+</html>
